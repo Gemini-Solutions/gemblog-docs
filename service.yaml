@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: gem-blog
+spec:
+  selector:
+    app: gem-blog
+  ports:
+    - protocol: TCP
+      port: 8000
+      targetPort: 8000

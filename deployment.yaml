@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gem-blog
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gem-blog
+  template:
+    metadata:
+      labels:
+        app: gem-blog
+    spec:
+      containers:
+      - name: gem-blog
+        image: registry.nexus.svc:32000/blog
+        ports:
+        - containerPort: 8000
+      imagePullSecrets:
+      - name: "nexuscred"        
