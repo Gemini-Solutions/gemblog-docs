@@ -1,0 +1,59 @@
+site_name: Gem-Blogs
+theme:
+  name: material
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - toc.integrate
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.tabs.link
+    - content.code.annotation
+    - content.code.copy
+    - content.tooltips
+  language: en
+  palette:
+    - scheme: default
+      toggle:
+        icon: material/toggle-switch-off-outline 
+        name: Switch to dark mode
+      primary: teal
+      accent: purple 
+    - scheme: slate 
+      toggle:
+        icon: material/toggle-switch
+        name: Switch to light mode    
+      primary: deep purple
+      accent: lime
+
+nav:
+  - Home: 'index.md'
+  - 'Awesome Blogs':
+    - 'AWS Passwordless Access Onprem K8s' : 'webidentiy-webhook-k8s-onprem.md'
+    - 'AWS Passwordless Access Onprem K8s2' : 'webidentiy-webhook-k8s-onprem-IDP.md'
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - admonition
+  - def_list
+  - pymdownx.arithmatex:
+      generic: true
+  - footnotes
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.mark
+  - pymdownx.emoji:
+      emoji_index: !!python/name:materialx.emoji.twemoji
+      emoji_generator: !!python/name:materialx.emoji.to_svg
+  - abbr
+  - attr_list
+  - pymdownx.snippets
+  - pymdownx.tasklist:
+      custom_checkbox: true
+plugins:
+  - glightbox
+copyright: |
+  &copy; 2024 <a href="https://geminisolutions.com"  target="_blank" rel="noopener">Gemini Solutions</a>
