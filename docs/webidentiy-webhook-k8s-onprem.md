@@ -3,7 +3,7 @@
 This blog is going to be a three part series on how to achieve passwordless (No AWS Secrets) access to AWS resources.
 In the first(this) part we'll achieve the same using K8s API server as Identity provider, in second it would be using an external IDP like Azure and last would be AWS EKS using IRSA.
 
-The guide requires readers to have understanding of [Kubernetes]("An orchestrator for your containerized workloads"), [JWT]("Base64 encoded payload that are signed by private key to prove the identity of the requester"), ["Mutating Webhook"]("Intercept the calls made to K8s API server") , AWS and [Identity Federation]("Entity authenticated from other source can access resources on other system through trust").
+The guide requires readers to have understanding of [Kubernetes]("An orchestrator for your containerized workloads"), [JWT]("Base64 encoded payload that are signed by private key to prove the identity of the requester"), [Mutating Webhook]("Intercept the calls made to K8s API server") , AWS and [Identity Federation]("Entity authenticated from other source can access resources on other system through trust").
 
 ## What do we mean by passwordless access and how does it work?
 

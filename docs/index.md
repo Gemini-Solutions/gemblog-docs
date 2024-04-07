@@ -3,7 +3,7 @@
 I'd be nourishing this page eventually as the number of blogs grow, for now, just the pointers on what's next.
 
 - [ ] AWS Passwordless Access using Webidentity
-    * [x] Using K8s API server as webidentity
+    * [x] [Using K8s API server as webidentity](/webidentiy-webhook-k8s-onprem)
     * [ ] Using external IDP as webidentity
     * [ ] AWS EKS with IRSA
 - [ ] Demystifying Service Mesh and Envoy filters
@@ -14,7 +14,7 @@ I'd be nourishing this page eventually as the number of blogs grow, for now, jus
 - [ ] Redis pubsub architecture, eventloop and epoll()
 - [ ] Many more :)
 
-## Sad but True!!
+## Could use some help!!
 
 ![Need a designer](assets/home/home_page.png)
 
