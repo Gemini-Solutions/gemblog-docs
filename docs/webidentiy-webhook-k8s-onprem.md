@@ -152,7 +152,8 @@ Admission controller are controllers that intecept the requests made to K8s API 
 *What does our mutating webhook do?*
 This mutating webhook, intercepts the request and makes 4 important patches
 
-![webhook in action](../assets/mutating-webhook-onprem/k8s_mutating_webhook.drawio.png){align=left}_
+[webhook in action](https://github.com/Gemini-Solutions/gemblog-docs/blob/master/assets/mutating-webhook-onprem/pod_sts_assumerole.drawio.png){align=left}
+
 
 * ENV *AWS_ROLE_ARN* : This env variable's value is used by SDK to assume the role in AWS.
 * ENV *AWS_WEB_IDENTITY_TOKEN_FILE* : The path to token file that would be used SDK to exchange temporary credentials
