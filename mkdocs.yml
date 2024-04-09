@@ -31,7 +31,7 @@ nav:
   - Home: 'index.md'
   - 'Awesome Blogs':
     - 'AWS Passwordless Access Onprem K8s' : 'webidentiy-webhook-k8s-onprem.md'
-    - 'AWS Passwordless Access Onprem K8s2' : 'webidentiy-webhook-k8s-onprem-IDP.md'
+    - 'AWS Passwordless Access External IDP' : 'webidentiy-webhook-external-IDP.md'
 markdown_extensions:
   - pymdownx.highlight:
       anchor_linenums: true

@@ -4,7 +4,7 @@ I'd be nourishing this page eventually as the number of blogs grow, for now, jus
 
 - [ ] AWS Passwordless Access using Webidentity
     * [x] [Using K8s API server as webidentity](/webidentiy-webhook-k8s-onprem)
-    * [ ] Using external IDP as webidentity
+    * [x] [Using external IDP as webidentity](/webidentiy-webhook-external-IDP)
     * [ ] AWS EKS with IRSA
 - [ ] Demystifying Service Mesh and Envoy filters
     * [ ] Abstratcing security, Cricuit breakers, observability etc
