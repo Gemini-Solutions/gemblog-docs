@@ -1,28 +1,33 @@
 ## Introduction
 
+This is the second part of the series which also focuses on passwordless access to AWS resources but with an external Identity provider as the issuer. Now this may seem a litte overhead and redundant for K8s enabled environment but works fairly well for non K8s based orchestrators. Though we are using kubernetes as our deployer in the blog but same concept can be applied elsewhere.
 
-This is the second part of the series which also focuses on passwordless access to AWS resources with external Identity provider as the issuer. Now this may seem a litte overhead and redundant for K8s enabled environment but works fairly well for non K8s based orchestrators where kubelet does not help with token refresh on your behalf. In this blog we are still leveraging k8s as our deployer but the concept remains the same and we can attach the side car (responsible for rotation of our secrets) to the main application code.
+NOTE: Do refer to [first](/webidentiy-webhook-k8s-onprem/) part of the blog to get the detailed information. [Code ref](https://github.com/Gemini-Solutions/gemblog-codestub/tree/master/webidentity-webhook-external-idp)
 
-It's going to be a short blog and would only be going over items different from previous scenario
+## Why we need an external IDP?
 
+Let's deep dive into the explanation, in case of on prem kubernetes, it's the responsibility of kubelet to grab and refresh the token from the K8s api server, but, what would happen if that's not the case
 
-## Why we need a side car now and an external IDP? 
+* We are using an orchestrator where the daemon/process can not get the token for us, let alone refresh
+* Kubernetes is an old version and does not support the issuer feature
+* Too afraid to take chances and mess up the API server :D (Believe me , I got my whole cluster down trying the previous one hence strict and ordered instructions given). As this setup does not require any changes being done to K8s server.
 
-Let's deep dive into the explanation, in case of on prem kubernetes, it's the responsibility of kubelet to grab and refresh the token, what would happen if that's not the case
+It is this external IDP that we need to grab the token and eastablish the trust relationship in AWS and IDP (in our case Azure. We'd be using Azure and IDP interchangeably).
 
-* We are using an other orchestrator where the daemon can not get the token for us, let alone refresh
-* Kubernetes is an old version and does not support the Issuer feature
-* Too afraid to take chances and mess up the API server :D (Believe me , i got my whole cluster down trying the previous one hence strict and ordered instructions given)
+## How everything works and why the side car?
 
-## How does the side car gets injected and what it does?
+Similar to previous section we inject some properties to the incoming request for POD creation but this time along with environment variables we add a side car, [webidentity_sidecar.sh](https://github.com/Gemini-Solutions/gemblog-codestub/blob/master/webidentity-webhook-external-idp/webidentity_sidecar/get_token.sh). It runs [every 50 minutes](https://github.com/Gemini-Solutions/gemblog-codestub/blob/master/webidentity-webhook-external-idp/webidentity_sidecar/Dockerfile#L5) and grab the token from the external IDP using [Client Credentials Flow]("Oauth2 Flow used for backend system where we can trust to put our secrets")
 
-Sidecar is injected the same way env variables are injected in the previous post, using mutating webhooks. [mutating_webhook.py](https://github.com/Gemini-Solutions/gemblog-codestub/blob/master/webidentity-webhook-external-idp/mutating_webhook/mutating_webhook.py#L10) adds the side car, and also adds the environment vairables *CLIENT_ID*, *CLIENT_SECRET* & *SCOPE* .
+The setup also need the pair of [Secrets](https://github.com/Gemini-Solutions/gemblog-codestub/blob/master/webidentity-webhook-external-idp/test_app/secret.yaml) which would be used by side car to do the [client credentials flow](https://developer.okta.com/docs/guides/implement-grant-type/clientcreds/main/#about-the-client-credentials-grant)
 
-The [webidentity_sidecar.sh](https://github.com/Gemini-Solutions/gemblog-codestub/blob/master/webidentity-webhook-external-idp/webidentity_sidecar/get_token.sh) uses those environment variables to the Oauth2 flow using [Client Credentials Flow]("Oauth2 Flow used for backend system where we can trust to put our secrets") and grab the token and does that [every 50 minutes](https://github.com/Gemini-Solutions/gemblog-codestub/blob/master/webidentity-webhook-external-idp/webidentity_sidecar/Dockerfile#L5)
 
 ## How does my IAM Role and Trust relationship looks like?
 
-AWS resources would similar with only change being the issuer, in this case it would be Azure or any IDP you have. Grab the token using curl and grab the issuer
+For setup refer [here](/webidentiy-webhook-k8s-onprem/#adding-identity-provider-and-role-for-the-pod)
+
+The setup looks exactly same as previous one but with slight change to issuer. All the external IDP have a [discovery endpoint](https://connect2id.com/products/server/docs/api/discovery) use that to grab the details add issuer as identity provider in IAM. As these are publically available we also need not create the AWS API GW public endpoints.
+
+*To grab the token*
 
 ```
 curl -X POST \
@@ -34,7 +39,7 @@ curl -X POST \
   "https://login.microsoftonline.com/YOUR_TENANT_ID/oauth2/v2.0/token"
 ``` 
 
-put the token in [jwt.io](https://jwt.io) and grab the issuer and put it in AWS, same way as explained in first section
+put the token in [jwt.io](https://jwt.io) and grab the issuer from the token and add it as identity providers in IAM and keep appending the audience list as you onboard newer applications.
 
 ## Enhancements & Next Steps
 
