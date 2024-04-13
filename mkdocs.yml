@@ -32,6 +32,7 @@ nav:
   - 'AWS Passwordless Access':
     - 'AWS Passwordless Access Onprem K8s' : 'webidentiy-webhook-k8s-onprem.md'
     - 'AWS Passwordless Access External IDP' : 'webidentiy-webhook-external-IDP.md'
+    - 'AWS Passwordless on EKS IRSA' : 'webidentity-IRSA-AWS-EKS.md'
   - 'Demystifying Service Mesh':
     - 'placeholder' : 'placeholder.md'
 markdown_extensions:

@@ -1,11 +1,11 @@
 ## Welcome
 
-I'd be nourishing this page eventually as the number of blogs grow, for now, just the pointers on what's next.
+I'd be nourishing this page eventually as the number of blogs grow, for now, just the pointers on what's done & what's coming next.
 
-- [ ] AWS Passwordless Access using Webidentity
+- [x] AWS Passwordless Access using Webidentity
     * [x] [Using K8s API server as webidentity](/webidentiy-webhook-k8s-onprem)
     * [x] [Using external IDP as webidentity](/webidentiy-webhook-external-IDP)
-    * [ ] AWS EKS with IRSA
+    * [x] [AWS EKS with IRSA](/webidentity-IRSA-AWS-EKS)
 - [ ] Demystifying Service Mesh and Envoy filters
     * [ ] Abstratcing security, Cricuit breakers, observability etc
     * [ ] Authorization layer with OPA
