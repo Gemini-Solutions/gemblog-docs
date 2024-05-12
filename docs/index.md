@@ -6,6 +6,7 @@ I'd be nourishing this page eventually as the number of blogs grow, for now, jus
     * [x] [Using K8s API server as webidentity](/webidentiy-webhook-k8s-onprem)
     * [x] [Using external IDP as webidentity](/webidentiy-webhook-external-IDP)
     * [x] [AWS EKS with IRSA](/webidentity-IRSA-AWS-EKS)
+- [ ] Vector Databases
 - [ ] Demystifying Service Mesh and Envoy filters
     * [ ] Abstratcing security, Cricuit breakers, observability etc
     * [ ] Authorization layer with OPA
