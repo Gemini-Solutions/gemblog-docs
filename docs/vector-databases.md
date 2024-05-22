@@ -1,4 +1,7 @@
+# DRAFT DRAFT DRAFT DRAFT DRAFT 
+
 # Vector Databases
+
 
 Disclaimer : I am no ML/AI expert and this document is for my own learning and is no source of truth. Here to find an answer to how can searching be fast and effecient in such large dataset where the similarity has to be found on such large vector :), blows mind, doesnt it.
 

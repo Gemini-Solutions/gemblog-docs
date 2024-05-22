@@ -33,8 +33,9 @@ nav:
     - 'AWS Passwordless Access Onprem K8s' : 'webidentiy-webhook-k8s-onprem.md'
     - 'AWS Passwordless Access External IDP' : 'webidentiy-webhook-external-IDP.md'
     - 'AWS Passwordless on EKS IRSA' : 'webidentity-IRSA-AWS-EKS.md'
+    - 'AWS Passwordless local - Device Flow' : 'webidentity-local-access-external-IDP.md'
   - 'Vector Databases': vector-databases.md  
-  - 'Demystifying Service Mesh':
+  - 'Demystifying Service Mesh & External AuthN/AuthZ':
     - 'Service Mesh Istio' : 'service-mesh.md'
 markdown_extensions:
   - pymdownx.highlight:
