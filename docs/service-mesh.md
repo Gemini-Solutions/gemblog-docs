@@ -109,6 +109,7 @@ Hence in our use case, we'd have to check for ip tables of that container's name
 
 ## Init Container in action..
 
+* As mentioned above the routing happens via IPtables or IPVs, let's see what our init container does to the application container and how it intercepts the request.
 * Find the container ID and get the linux process ID of the container running. It does not matter any container of the pod should do as they share the same network namespace.
 * The command would give you the containerID ```kubectl get pods -nats some-awesome-app -o jsonpath='{.status.containerStatuses[0].containerID}'```
 * Grab the ID and get the process id on the host ```docker inspect <container-sha> --format '{{ .State.Pid }}'```
