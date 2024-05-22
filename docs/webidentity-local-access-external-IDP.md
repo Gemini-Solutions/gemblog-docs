@@ -2,7 +2,6 @@
 
 We have achieved passwordless access using orchestrator , but in this section we'd use webidentity and an external Identity Provider (Azure AD in our case) for local development. The problem statement is still the same, we dont want to distribute the access keys for accessing AWS resources and have the exact same configuration and source code for all our environments.
 
-
 ## What options do we have?
 
 We can leverage webidentity and establish the trust relationship between our IDP and the AWS, wherein we have the token issued from our IDP and AWS trust the token. But which authorization grant to be used here. Let's evaluate
@@ -26,13 +25,16 @@ We can leverage webidentity and establish the trust relationship between our IDP
 We are taking Azure AD as example, but this can work with any IDP out there. As you are working with an app, the app would already be registered with Azure AD. 
 
 * Create an app if not already configured/registered with Azure
+* Ensure that app can do device flow. In manage app registeration section for your app -> Authentication -> Advanced Settings -> Enable button.
+* Get yourself added to a AD security group for which the trust relationship is to be established.
+* You might also want to add group claims in ```Token Configuration``` section
 * Add a custom scope in ```Expose an API``` section in registered app in Azure AD.
 * Get the scope which would be of type ```api://app-id/scope```
 * keep app id and scope handy.
 
 ## Setting up IAM role in AWS
 
-* Create an IAM role ```appname-local-webidentity-role``` with custom trust policy
+* Create an IAM role ```appname-local-webidentity-role``` with custom trust policy where appname identifies your app and matches that of in azure for consistency.
 
 ```
 {
@@ -47,12 +49,14 @@ We are taking Azure AD as example, but this can work with any IDP out there. As 
             "Condition": {
                 "StringEquals": {
                     "sts.windows.net/1122334455/:sub": "JWT-sub-claim",
+                    "sts.windows.net/1122334455/:groups": "s3-access-group",
                 }
             }
         }
     ]
 }
 ```
+
 * In the Condition section add claim that serves your purpose, either by audience or security groups.
 * Add least required permissions to the role and ensure that they are not giving permission to any prod resource.
 
@@ -60,7 +64,7 @@ We are taking Azure AD as example, but this can work with any IDP out there. As 
 
 * Once the application has been setup in Azure AD and IAM role been created, grab [devce_flow.sh](https://github.com/Gemini-Solutions/gemblog-codestub/blob/master/webidentity-local-aws-device-flow/device_flow.sh). It needs ```jq``` but you can manage it and it to path variable
 * Run the script ```./device_flow.sh <app/client id> "<api://<appid>/<custom-scope-created>>"```.  There are two paramteres 1st being the app id and other being the scope created in the setup phase.
-* Do as instructed, going over to ```https://microsoft.com/devicelogin``` and adding the code and grab the token
+* Do as instructed on the cli, going over to ```https://microsoft.com/devicelogin``` and adding the code and grab the token
 
 ## How to access AWS resources
 
