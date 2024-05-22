@@ -6,6 +6,7 @@ I'd be nourishing this page eventually as the number of blogs grow, for now, jus
     * [x] [Using K8s API server as webidentity](/webidentiy-webhook-k8s-onprem)
     * [x] [Using external IDP as webidentity](/webidentiy-webhook-external-IDP)
     * [x] [AWS EKS with IRSA](/webidentity-IRSA-AWS-EKS)
+    * [x] [Access from Local - Device flow](/webidentity-local-access-external-IDP)
 - [x] Demystifying Service Mesh & Extending Security
     * [x] [What are Service Mesh & how it works](./service-mesh.md)
     * [x] [Extending Service Mesh for AuthN/AuthZ](./service-mesh-authN-authZ.md)
