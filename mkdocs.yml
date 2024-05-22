@@ -34,9 +34,11 @@ nav:
     - 'AWS Passwordless Access External IDP' : 'webidentiy-webhook-external-IDP.md'
     - 'AWS Passwordless on EKS IRSA' : 'webidentity-IRSA-AWS-EKS.md'
     - 'AWS Passwordless local - Device Flow' : 'webidentity-local-access-external-IDP.md'
-  - 'Vector Databases': vector-databases.md  
   - 'Demystifying Service Mesh & External AuthN/AuthZ':
     - 'Service Mesh Istio' : 'service-mesh.md'
+    - 'Extending Envoy for AuthN/AuthZ' : 'service-mesh-authN-authZ.md'
+  - 'Vector Databases': vector-databases.md  
+    
 markdown_extensions:
   - pymdownx.highlight:
       anchor_linenums: true
