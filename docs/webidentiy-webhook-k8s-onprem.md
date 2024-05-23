@@ -172,6 +172,9 @@ This mutating webhook, intercepts the request and makes 4 important patches
 * Actual Volume of projected type with source: Serviceaccount , wherein kubelet would grab the token
 
 
+```NOTE : You might have to add AWS_REGION as env variable and it's value as some SDKs give preference to env variables hence if they dont find the env variable for aws region, it would err out even if you have configured in you SDK while building the client.```
+
+
 ### *Understanding the code repo*
 
 * [mutating_webhook.py](https://github.com/Gemini-Solutions/gemblog-codestub/blob/master/webidentiy-webhook-k8s-onprem/mutating_webhook/mutating_webhook.py): This is the actual logic of webhook that would intercept and patch the steps explained above.
