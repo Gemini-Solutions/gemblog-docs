@@ -10,6 +10,7 @@ I'd be nourishing this page eventually as the number of blogs grow, for now, jus
 - [x] Demystifying Service Mesh & Extending Security
     * [x] [What are Service Mesh & how it works](./service-mesh.md)
     * [x] [Extending Service Mesh for AuthN/AuthZ](./service-mesh-authN-authZ.md)
+- [x] [Validating HTTP/2 Multiplexing](./Some-Tests-For-Http2.md)
 - [ ] Vector Databases
 - [ ] Containers but without the runtime
     * [ ] Playing with namespaces, cgroups and seccomp profiles
