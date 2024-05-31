@@ -36,7 +36,9 @@ nav:
     - 'AWS Passwordless local - Device Flow' : 'webidentity-local-access-external-IDP.md'
   - 'Demystifying Service Mesh & External AuthN/AuthZ':
     - 'Service Mesh Istio' : 'service-mesh.md'
-    - 'Extending Envoy for AuthN/AuthZ' : 'service-mesh-authN-authZ.md'  
+    - 'Extending Envoy for AuthN/AuthZ' : 'service-mesh-authN-authZ.md'
+  - 'Validating HTTP/2 Multiplexing':
+    - 'HTTP/2 Tests' : 'Some-Tests-For-Http2.md'  
 
 markdown_extensions:
   - pymdownx.highlight:
