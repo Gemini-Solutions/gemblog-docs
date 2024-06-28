@@ -1,30 +1,30 @@
 ## Objective
 
-The goal of this series is only to give you an idea, that containers are just the isolated process that do not need container runtime (docker). Vanialla Linux itself is capable of running the containerized process and we'll follow the guide along to create our own container without any runtime.
+The objective of this series is to demonstrate that containers, which are essentially isolated processes, can be implemented without relying on a container runtime like Docker. Vanilla Linux itself can facilitate the execution of containerized processes. Throughout this guide, we will explore how to create and manage our own containers independently.
 
-## What is a container
+## What is a Container
 
-Container is a process that is running in it's own linux namespace, restricted resource access using control groups and secured by denying access to some elevated system calls using seccomp profiles.
+A container is a process running within its own Linux namespace, leveraging restricted resource access through control groups (cgroups), and secured by limiting access to certain system calls using Seccomp profiles.
 
-## What is a linux namespace
+## What is a Linux Namespace
 
-Linux namespaces is an abstraction layer across system resources, wherein process running inside the namespace *ns1* cant see the resources for the process running inside namespace *ns2*.  
+Linux namespaces provide an abstraction layer for system resources. Processes running inside one namespace (e.g., `ns1`) are isolated from processes running in another namespace (`ns2`). This isolation ensures that each namespace has its own view of system resources.
 
-## What is Linux ControlGroup
+## What are Linux Control Groups (cgroups)
 
-Namespaces restrict what process can see, control groups restrict what they can access. It allows you to allocate, restrict and monitor the resources like cpu, memory, network etc.
+Control groups are used to manage and monitor system resources such as CPU, memory, and network bandwidth. They enable allocation and restriction of these resources among processes or groups of processes, ensuring efficient resource utilization and isolation.
 
-## What is Seccomp Profile
+## What is a Seccomp Profile
 
-Seccomp is a kernel feature which restricts the system calls that containers can make, hence ensuring they can not break into the system and do something catastrophic.
+Seccomp (Secure Computing Mode) is a Linux kernel feature that restricts the system calls available to a process. By using Seccomp profiles, container environments can limit the set of system calls that containerized applications can make. This restriction helps prevent potential security breaches and ensures that containers cannot perform unauthorized actions on the host system.
+
 
 ## Unshare System Call
 
-Unshare creates a new namespace (using various arguments) and is scoped to the member process. 
-https://man7.org/linux/man-pages/man1/unshare.1.html
+The `unshare` system call in Linux is pivotal for creating new namespaces, which are essential for containerization without relying on Docker or any container runtime. This system call allows a process to create and manage its own namespaces, thereby isolating its execution environment from the rest of the system.
+The `unshare` command, detailed in its [man page](https://man7.org/linux/man-pages/man1/unshare.1.html), enables a process to disassociate from certain namespaces or create new ones. By specifying different namespace types as arguments (such as network, mount, IPC, PID, user, or UTS namespaces), `unshare` empowers developers to control the level of isolation and resource visibility of their processes. Now let's start to create our own isolated process.
 
-
-## Mount Namespace: 
+## Mount Namespace
 
 Mount (MNT) namespaces are a powerful tool for creating per-process file system trees (root filesystem views). If you simply create the mount namespace using ```unshare```, nothing would really happen, The reason for this is that systemd defaults to recursively sharing the mount points with all new namespaces
 let's simply create a new namespace using unshare and only the mount namespace.
@@ -62,9 +62,63 @@ Note: --mount-proc= will only work if the proc is mounted to procfs of the alpin
 
 ## Network Namespace
 
+Now you will notice that only the bash which pid=1 and the new ps -aef are the only process, we just isolated process and mount namespace. But it's of no use as such, let's extend our example to run a basic server in isolation. For that we'll need our own network namespaces with virtual routes. Let's get it going. 
+
+* Create network namespace netns1 ```ip netns add netns1```
+* Execing into network namespace and enabling loopback ```ip netns exec netns1 ip link set dev lo up```
+* Creating a virtual ethernet pair ```ip link add veth0 type veth peer name veth1```
+* Moving one end of pair to the namespace ```ip link set veth1 netns netns1```
+* Assigns an IP address and subnet mask to the veth0 network interface```ip addr add 192.168.0.1/24 dev veth0```
+* Brings the veth0 network interface up ```ip link set dev veth0 up```
+* Assigns an IP address and subnet mask to the veth1 network interface inside the netns1 network namespace ```ip netns exec netns1 ip addr add 192.168.0.2/24 dev veth1```
+* Brings the veth1 network interface up inside the netns1 network namespace ```ip netns exec netns1 ip link set dev veth1 up```
+
+#### Running inside the network namespace
+
+After all the commands, we'll tweak our unshare to actually run inside the network namespace and see our ip routes
+```ip netns exec netns1 unshare -pf  chroot /root/alp12/ ip addr```. And we'll see the loopback and the veth1 attached to our namespace.
+Let's run a golang server inside our isolated environment and access it from the host with virtual ip.
 
 
-now you will notice that only the bash which pid=1 and the new ps -aef are the only process, we just isolated process namespace
+
+
+
+docker create --name container-name image-name
+docker cp container-name:/path/src ./target 
+
+install control groups yum
+yum install -y libcgroup-tools
+cgcreate -g memory,cpu:/mygroup
+250 MB
+echo 262144000 > /sys/fs/cgroup/memory/mygroup/memory.limit_in_bytes
+
+limiting CPU cfs_quota_us: total amount of time in micro seconds processes can run in a cgroup, 
+in this it says the process can run for 0.5 seconds. (it works in tandem with cpu.cfs_period_us)
+echo 50000 > /sys/fs/cgroup/cpu/mygroup/cpu.cfs_quota_us
+
+It specifies the time in microseconds for how regularly can the process request the resources which are restriced by cfs_quota_us
+echo 1000000  > /sys/fs/cgroup/cpu/mygroup/cpu.cfs_period_us
+
+***
+It's easy to get the memory allocated hence it kills if it can not allocate, where as the cpu restriction can be witnessed by checking the time it takes to do the same task by reducing the cfs_quota_us
+
+time cgexec -g memory,cpu:/mygroup ./mem
+
+
+
+**Cleanup**
+ip netns delete netns1
+ip link del veth0
+
+https://www.gilesthomas.com/2021/03/fun-with-network-namespaces
+
+
+
+
+
+
+
+
 
 mountnamespace : https://book.hacktricks.xyz/linux-hardening/privilege-escalation/docker-security/namespaces/mount-namespace
 mount chroot : https://unix.stackexchange.com/questions/464033/understanding-how-mount-namespaces-work-in-linux
