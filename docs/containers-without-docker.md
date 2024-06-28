@@ -8,11 +8,11 @@ A container is a process running within its own Linux namespace, leveraging rest
 
 ## What is a Linux Namespace
 
-Linux namespaces provide an abstraction layer for system resources. Processes running inside one namespace (e.g., `ns1`) are isolated from processes running in another namespace (`ns2`). This isolation ensures that each namespace has its own view of system resources.
+Linux namespaces provide an abstraction layer for system resources. Processes running inside one namespace (e.g., `ns1`) are isolated from processes running in another namespace (`ns2`). This isolation ensures that each namespace has its own view of system resources. We'll leverage ```unshare``` to isolate the namespaces.
 
 ## What are Linux Control Groups (cgroups)
 
-Control groups are used to manage and monitor system resources such as CPU, memory, and network bandwidth. They enable allocation and restriction of these resources among processes or groups of processes, ensuring efficient resource utilization and isolation.
+Control groups are used to manage and monitor system resources such as CPU, memory, and network bandwidth. They enable allocation and restriction of these resources among processes or groups of processes, ensuring efficient resource utilization and isolation. We'll create a control group, assign memory and CPU limits and run the process with the control group. 
 
 ## What is a Seccomp Profile
 
@@ -26,19 +26,19 @@ The `unshare` command, detailed in its [man page](https://man7.org/linux/man-pag
 
 ## Mount Namespace
 
-Mount (MNT) namespaces are a powerful tool for creating per-process file system trees (root filesystem views). If you simply create the mount namespace using ```unshare```, nothing would really happen, The reason for this is that systemd defaults to recursively sharing the mount points with all new namespaces
-let's simply create a new namespace using unshare and only the mount namespace.
+Mount (MNT) namespaces are a powerful tool for creating per-process file system trees (root filesystem views). If you simply create the mount namespace using ```unshare```, nothing would really happen, The reason for this is that systemd defaults to recursively sharing the mount points with all new namespaces.
+Simply create a new namespace using unshare and only the mount namespace.
 
 ```unshare -m```
 ```df -h```
 
-we are seeing the exact same mount points which we dont want, so let's create our own filesystem using alpine linux and use it as the mountpoint for our unshared process (bash). Let's use the most famous minimalist root filesystem, alpine for our purpose.
+we are seeing the exact same mount points which we dont want, so we need to create our own filesystem using alpine linux and use it as the mountpoint for our unshared process (bash). Let's use the most famous minimalist root filesystem, alpine for our purpose.
 
 ```mkdir alpine-rootfs && cd alpine-rootfs```
 ```curl -o alpine.tar.gz https://dl-cdn.alpinelinux.org/alpine/v3.19/releases/x86_64/alpine-minirootfs-3.19.0-x86_64.tar.gz```
 ```tar xfz alpine.tar.gz && rm -rf alpine.tar.gz```
 
-while unshare let us create a new namespace and runs the command in the new namespace in this case ```unshare -m``` with new mount namespace, we have another function, chroot, which changes the root directory (in our case alpine we downloaded)
+while unshare helps create a new namespace and runs the command in the new namespace in this case ```unshare -m``` with new mount namespace, we have another function, chroot, which changes the root directory (in our case alpine we downloaded)
 
 ```chroot absolute-path-alpine-rootfs /bin/sh```
 
@@ -47,22 +47,20 @@ the /bin/sh is the command that is inside the root file system being used for ch
 now let's run some commands to see what happened, 
 ```ps -aef```
 
-well no process, did we really achieve isolation? duhh!! not really, it's just coz the /proc is empty. What about the network namespace, let's try to see what all netowrk devices and IP addresses we have, ```ip addr```. Again, we are seeing the information from the host, let's also try to see the details of the current user and the hostname as well. ```id``` & ```hostname```. 
-let's see all the host process inside the chroot as well,
-```mount -t proc proc /proc``` and then run ```ps -aef```. Well everything is visible.
-
+well no process, did we really achieve isolation? duhh!! not really, it's just coz the /proc is empty. What about the network namespace, Try to see what all netowrk devices and IP addresses we have, ```ip addr```. Again, we are seeing the information from the host, let's also try to see the details of the current user and the hostname as well. ```id``` & ```hostname```. 
+And what about the host process inside the chroot,
+```mount -t proc proc /proc``` and then run ```ps -aef```. Well everything is visible. To achieve isolation from the process and use our own filesystem, we need to use chroot intandem with unshare
 ```unshare -p -f --mount-proc=<absolute-path-alpine-rootfs>/proc/ chroot <absolute-path-alpine-rootfs> /bin/sh```
 
 Note: --mount-proc= will only work if the proc is mounted to procfs of the alpineroot fs, if it's unmounted somehow then using --mount-proc with unshare have no effect, instead, simply run unshare and then mount the proc again, like this
 
-```unshare -p -f chroot <absolute-path-alpine-rootfs> /bin/sh```
-```mount -t proc proc /proc```
-```ps -aef```
-
+```unshare -p -f -m chroot <absolute-path-alpine-rootfs> /bin/sh
+mount -t proc proc /proc
+ps -aef```
 
 ## Network Namespace
 
-Now you will notice that only the bash which pid=1 and the new ps -aef are the only process, we just isolated process and mount namespace. But it's of no use as such, let's extend our example to run a basic server in isolation. For that we'll need our own network namespaces with virtual routes. Let's get it going. 
+Now you will notice that only the bash which pid=1 and the new ps -aef are the only process, we just isolated process and mount namespace. But it's of no great use as such, let's extend our example to run a basic server in isolation. For that we'll need our own network namespaces with virtual routes. 
 
 * Create network namespace netns1 ```ip netns add netns1```
 * Execing into network namespace and enabling loopback ```ip netns exec netns1 ip link set dev lo up```
@@ -81,7 +79,7 @@ Let's run a golang server inside our isolated environment and access it from the
 
 
 
-
+## Cgroups
 
 docker create --name container-name image-name
 docker cp container-name:/path/src ./target 
@@ -91,6 +89,8 @@ yum install -y libcgroup-tools
 cgcreate -g memory,cpu:/mygroup
 250 MB
 echo 262144000 > /sys/fs/cgroup/memory/mygroup/memory.limit_in_bytes
+
+https://docs.redhat.com/en/documentation/red_hat_enterprise_linux/6/html/resource_management_guide/sec-cpu#sec-cpu
 
 limiting CPU cfs_quota_us: total amount of time in micro seconds processes can run in a cgroup, 
 in this it says the process can run for 0.5 seconds. (it works in tandem with cpu.cfs_period_us)
