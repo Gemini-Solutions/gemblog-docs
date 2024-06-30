@@ -12,7 +12,7 @@ I'd be nourishing this page eventually as the number of blogs grow, for now, jus
     * [x] [Extending Service Mesh for AuthN/AuthZ](./service-mesh-authN-authZ.md)
 - [x] [Validating HTTP/2 Multiplexing](./Some-Tests-For-Http2.md)
 - [ ] Vector Databases
-- [x] [Containers but without the runtime](./containers-without-docker.md)
+- [x] [Containers Without Docker](./containers-without-docker.md)
 - [ ] Redis pubsub architecture, eventloop and epoll()
 - [ ] Many more :)
 
