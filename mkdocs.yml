@@ -40,7 +40,7 @@ nav:
   - 'Validating HTTP/2 Multiplexing':
     - 'HTTP/2 Tests' : 'Some-Tests-For-Http2.md'  
   - 'Containers Without Docker':
-    - 'containers withoout any container runtime' : 'containers-without-docker.md'   
+    - 'Containers Without Container Runtime' : 'containers-without-docker.md'   
 
 markdown_extensions:
   - pymdownx.highlight:
@@ -55,6 +55,11 @@ markdown_extensions:
   - pymdownx.details
   - pymdownx.superfences
   - pymdownx.mark
+  - pymdownx.critic
+  - pymdownx.caret
+  - pymdownx.keys
+  - pymdownx.mark
+  - pymdownx.tilde
   - pymdownx.emoji:
       emoji_index: !!python/name:materialx.emoji.twemoji
       emoji_generator: !!python/name:materialx.emoji.to_svg

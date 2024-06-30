@@ -1,6 +1,6 @@
 ## Objective
 
-The objective of this series is to demonstrate that containers, which are essentially isolated processes, can be implemented without relying on a container runtime like Docker. Vanilla Linux itself can facilitate the execution of containerized processes. Throughout this guide, we will explore how to create and manage our own containers independently.
+This series is to demonstrate that containers, which essentially are isolated processes, can be implemented without relying on a container runtime like Docker. Vanilla Linux itself can facilitate the execution of containerized processes. Throughout this guide, we will explore how to create and manage our own containers independently.
 
 ## What is a Container
 
@@ -21,7 +21,7 @@ Seccomp (Secure Computing Mode) is a Linux kernel feature that restricts the sys
 
 ## Unshare System Call
 
-The `unshare` system call in Linux is pivotal for creating new namespaces, which are essential for containerization without relying on Docker or any container runtime. This system call allows a process to create and manage its own namespaces, thereby isolating its execution environment from the rest of the system.
+The {==_unshare_==} system call in Linux is pivotal for creating new namespaces, which are essential for containerization without relying on Docker or any container runtime. This system call allows a process to create and manage its own namespaces, thereby isolating its execution environment from the rest of the system.
 The `unshare` command, detailed in its [man page](https://man7.org/linux/man-pages/man1/unshare.1.html), enables a process to disassociate from certain namespaces or create new ones. By specifying different namespace types as arguments (such as network, mount, IPC, PID, user, or UTS namespaces), `unshare` empowers developers to control the level of isolation and resource visibility of their processes. Now let's start to create our own isolated process.
 
 ## Mount Namespace
@@ -29,16 +29,20 @@ The `unshare` command, detailed in its [man page](https://man7.org/linux/man-pag
 Mount (MNT) namespaces are a powerful tool for creating per-process file system trees (root filesystem views). If you simply create the mount namespace using ```unshare```, nothing would really happen, The reason for this is that systemd defaults to recursively sharing the mount points with all new namespaces.
 Simply create a new namespace using unshare and only the mount namespace.
 
-```unshare -m```
-```df -h```
+```
+unshare -m
+df -h
+```
 
 we are seeing the exact same mount points which we dont want, so we need to create our own filesystem using alpine linux and use it as the mountpoint for our unshared process (bash). Let's use the most famous minimalist root filesystem, alpine for our purpose.
 
-```mkdir alpine-rootfs && cd alpine-rootfs```
-```curl -o alpine.tar.gz https://dl-cdn.alpinelinux.org/alpine/v3.19/releases/x86_64/alpine-minirootfs-3.19.0-x86_64.tar.gz```
-```tar xfz alpine.tar.gz && rm -rf alpine.tar.gz```
+``` sh
+mkdir alpine-rootfs && cd alpine-rootfs
+curl -o alpine.tar.gz https://dl-cdn.alpinelinux.org/alpine/v3.19/releases/x86_64/alpine-minirootfs-3.19.0-x86_64.tar.gz
+tar xfz alpine.tar.gz && rm -rf alpine.tar.gz
+```
 
-while unshare helps create a new namespace and runs the command in the new namespace in this case ```unshare -m``` with new mount namespace, we have another function, chroot, which changes the root directory (in our case alpine we downloaded)
+while unshare helps create a new namespace and runs the command in the new namespace in this case ```unshare -m``` with new mount namespace, we have another function ```chroot``` which changes the root directory (in our case alpine we downloaded)
 
 ```chroot absolute-path-alpine-rootfs /bin/sh```
 
@@ -56,7 +60,8 @@ Note: --mount-proc= will only work if the proc is mounted to procfs of the alpin
 
 ```unshare -p -f -m chroot <absolute-path-alpine-rootfs> /bin/sh
 mount -t proc proc /proc
-ps -aef```
+ps -aef```.
+
 
 ## Network Namespace
 
@@ -73,71 +78,66 @@ Now you will notice that only the bash which pid=1 and the new ps -aef are the o
 
 #### Running inside the network namespace
 
+We'll try to run a golang server in the isolated namespace just created and try access it locally from the host to the virtual ip address of network namespace. For this we need to take help of docker to build our binary and extract it and put in our alpine filesystem. (If you already have GO binaries you can skip this and simply compile the file.)
+
+* ```docker build -t hello-world -f``` [Dockerfile](https://github.com/Gemini-Solutions/gemblog-codestub/blob/master/containers/Dockerfile)
+* ```docker create --name extract-hello -t hello-world```
+* ```docker cp extract-hello:/app/hello-world .```
+* ```cp hello-world <absolute-path-alpine-rootfs>/home/```
+
 After all the commands, we'll tweak our unshare to actually run inside the network namespace and see our ip routes
-```ip netns exec netns1 unshare -pf  chroot /root/alp12/ ip addr```. And we'll see the loopback and the veth1 attached to our namespace.
-Let's run a golang server inside our isolated environment and access it from the host with virtual ip.
+```ip netns exec netns1 unshare -pf  chroot /root/alp12/ ip addr```. We'll see the loopback and the veth1 attached to our namespace.
+And one final step ```ip netns exec netns1 unshare -fmiup  chroot /root/alp12/ /home/hello-world &```. We can access the server from the host using ```curl 192.168.0.2:8080```
 
 
 
-## Cgroups
+## Cgroups In Action
 
-docker create --name container-name image-name
-docker cp container-name:/path/src ./target 
+So far we have seen how to isolate the processes running in linux, so that, they can not see process information outside their namespace, but what about restricting their access to resources. This is where control groups come into play. We'll be restricting access to memory and cpu resources for our basic golang. Follow the steps below to create a controlgroup and run a very basic stress test only to see it getting killed. (I had cgroup v1, hence using an old approach, you can follow similar approach with bunch of googling to see if you have control group v2 enabled and how to do the same)
 
-install control groups yum
-yum install -y libcgroup-tools
-cgcreate -g memory,cpu:/mygroup
-250 MB
-echo 262144000 > /sys/fs/cgroup/memory/mygroup/memory.limit_in_bytes
+* Creating a controlgroup with name my group : ```cgcreate -g memory,cpu:/mygroup```
+* Restricting access to only 250MB : ```echo 262144000 > /sys/fs/cgroup/memory/mygroup/memory.limit_in_bytes```
+* Build the [golang file](https://github.com/Gemini-Solutions/gemblog-codestub/blob/master/containers/memory_cpu_stress.go) this creates 500MB block and extract the binary as done in earlier steps
+* Running it with our cgroup: ```time cgexec -g memory,cpu:/mygroup ./memory_cpu_stress```.  You'll notice the process got killed.
+* Increasing the memory to what's needed(500+ MB) and rerunning it succeeds. ```echo 576716800 > /sys/fs/cgroup/memory/mygroup/memory.limit_in_bytes```. Run the process again to see it succeeding but do note the time.
 
-https://docs.redhat.com/en/documentation/red_hat_enterprise_linux/6/html/resource_management_guide/sec-cpu#sec-cpu
+We'll now restrict the CPU rescoures. CPU resources are not straight forward as it's dependent on the time for which the process can request the CPU till it's throttled.
 
-limiting CPU cfs_quota_us: total amount of time in micro seconds processes can run in a cgroup, 
-in this it says the process can run for 0.5 seconds. (it works in tandem with cpu.cfs_period_us)
-echo 50000 > /sys/fs/cgroup/cpu/mygroup/cpu.cfs_quota_us
-
-It specifies the time in microseconds for how regularly can the process request the resources which are restriced by cfs_quota_us
-echo 1000000  > /sys/fs/cgroup/cpu/mygroup/cpu.cfs_period_us
-
-***
-It's easy to get the memory allocated hence it kills if it can not allocate, where as the cpu restriction can be witnessed by checking the time it takes to do the same task by reducing the cfs_quota_us
-
-time cgexec -g memory,cpu:/mygroup ./mem
+* Limiting CPU cfs_quota_us: Total amount of time in micro seconds processes can run in a cgroup. ```echo 1000 > /sys/fs/cgroup/cpu/mygroup/cpu.cfs_quota_us```. The process in this group can only run for 1ms. (it works in tandem with cpu.cfs_period_us)
+* Limiting CPU cpu.cfs_period_us: It specifies the time in microseconds for how regularly can the process request the resources which are restriced by cfs_quota_us. ```echo 1000000  > /sys/fs/cgroup/cpu/mygroup/cpu.cfs_period_us```, this limits the process to request the cpu resources every 1second only (10^6 micro second).
+* Run the process again and see the time it takes to complete (if it ever does.). Adjust ```cfs_quota_us``` to increase the quota and have some tries to see the process completing and running slow as we restricted it's access to CPU resources
 
 
+## Appreciating Docker & Runtimes
 
-**Cleanup**
-ip netns delete netns1
-ip link del veth0
+After all the hassle and setup our final command to run a restricted process would be, 
 
-https://www.gilesthomas.com/2021/03/fun-with-network-namespaces
+``` 
+cgexec -g memory,cpu:/mygroup \
+ip netns exec netns1 \
+unshare -fmiup  chroot /root/alpine-root-fs/ /home/hello-world
+```
 
-
-
-
-
-
-
+Imagine doing this for each process and still be unsure of security issues and vulnerabilities that can pop up, we still are missing on seccomp profiles which [docker does for us](https://docs.docker.com/engine/security/seccomp/#pass-a-profile-for-a-container). These profiles can be complex and I am not a security expert hence had no idea how could I breach my namespace even if running as a root.
 
 
-mountnamespace : https://book.hacktricks.xyz/linux-hardening/privilege-escalation/docker-security/namespaces/mount-namespace
-mount chroot : https://unix.stackexchange.com/questions/464033/understanding-how-mount-namespaces-work-in-linux
-chroot : https://unix.stackexchange.com/questions/456620/how-to-perform-chroot-with-linux-namespaces
+## References
 
+Picking and summing it up from the amazing blogs and references : 
 
-
-https://blog.quarkslab.com/digging-into-linux-namespaces-part-2.html
-https://www.redhat.com/sysadmin/mount-namespaces
-https://linuxera.org/containers-under-the-hood/
-https://github.com/util-linux/util-linux/issues/648
-
-
-
-## Some Interesting References
-https://medium.com/@razika28/inside-proc-a-journey-through-linuxs-process-file-system-5362f2414740
-https://man7.org/linux/man-pages/man5/proc.5.html
-https://www.gilesthomas.com/2021/03/fun-with-network-namespaces
-https://danishpraka.sh/posts/build-docker-image-from-scratch/
-https://blog.quarkslab.com/digging-into-linux-namespaces-part-1.html
-https://www.toptal.com/linux/separation-anxiety-isolating-your-system-with-linux-namespaces
-https://www.redhat.com/sysadmin/mount-namespaces
+* mountnamespace : <https://book.hacktricks.xyz/linux-hardening/privilege-escalation/docker-security/namespaces/mount-namespace>
+* mount chroot : <https://unix.stackexchange.com/questions/464033/understanding-how-mount-namespaces-work-in-linux>
+* chroot : <https://unix.stackexchange.com/questions/456620/how-to-perform-chroot-with-linux-namespaces>
+* <https://www.gilesthomas.com/2021/03/fun-with-network-namespaces>
+* <https://blog.quarkslab.com/digging-into-linux-namespaces-part-2.html>
+* <https://www.redhat.com/sysadmin/mount-namespaces>
+* <https://linuxera.org/containers-under-the-hood/>
+* <https://github.com/util-linux/util-linux/issues/648>
+* <https://medium.com/@razika28/inside-proc-a-journey-through-linuxs-process-file-system-5362f2414740>
+* <https://man7.org/linux/man-pages/man5/proc.5.html>
+* <https://www.gilesthomas.com/2021/03/fun-with-network-namespaces>
+* <https://danishpraka.sh/posts/build-docker-image-from-scratch/>
+* <https://blog.quarkslab.com/digging-into-linux-namespaces-part-1.html>
+* <https://www.toptal.com/linux/separation-anxiety-isolating-your-system-with-linux-namespaces>
+* <https://www.redhat.com/sysadmin/mount-namespaces>
+* <https://docs.redhat.com/en/documentation/red_hat_enterprise_linux/6/html/resource_management_guide/sec-cpu#sec-cpu>
